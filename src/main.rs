@@ -33,16 +33,20 @@ fn cpu_temp() {
     // println!("{}", temp.status);
 }
 
-fn parse_load_average(load_average: &String) -> Option<(f32, f32, f32, i32, i32, i32)> {
+fn parse_load_average(load_average: &String) -> Option<(f64, f64, f64, i32, i32, i32)> {
     let regex = Regex::new(r"[\d\.]+").unwrap();
-    let mut caps = regex.find_iter(load_average);
+    let mut caps = regex
+        .find_iter(load_average)
+        .map(|x| x.as_str().parse::<f64>().ok());
 
-    let avg1 = caps.next().unwrap().as_str().parse().ok()?;
-    let avg5 = caps.next().unwrap().as_str().parse().ok()?;
-    let avg15 = caps.next().unwrap().as_str().parse().ok()?;
-    let active_procs = caps.next().unwrap().as_str().parse().ok()?;
-    let total_procs = caps.next().unwrap().as_str().parse().ok()?;
-    let last_proc = caps.next().unwrap().as_str().parse().ok()?;
+    // println!("{}", load_average);
+
+    let avg1: f64 = caps.next()??;
+    let avg5: f64 = caps.next()??;
+    let avg15: f64 = caps.next()??;
+    let active_procs: i32 = caps.next()?? as i32;
+    let total_procs: i32 = caps.next()?? as i32;
+    let last_proc: i32 = caps.next()?? as i32;
 
     return Some((avg1, avg5, avg15, active_procs, total_procs, last_proc));
 }
