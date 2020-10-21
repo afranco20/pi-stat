@@ -6,8 +6,8 @@ use std::io::Result;
 use std::process::Command;
 
 fn main() {
-    uptime();
-    cpu_temp();
+    let _ = uptime();
+    let _ = cpu_temp();
     let _ = cpu_load_average();
 }
 
@@ -20,17 +20,26 @@ fn uptime() {
     println!("{}", String::from_utf8_lossy(&uptime.stdout));
 }
 
-fn cpu_temp() {
-    let temp = Command::new("cat")
-        .arg("/sys/class/thermal/thermal_zone0/temp")
-        .output()
-        .expect("failed to get cpu temp");
+fn cpu_temp() -> Result<()> {
+    let file = File::open("/sys/class/thermal/thermal_zone0/temp")?;
+    let mut buf_reader = BufReader::new(file);
 
-    let val: String = String::from_utf8(temp.stdout).expect("not valid utf8");
-    let val: i32 = val.trim().parse().expect("not a valid number");
+    let mut contents = String::new();
+    buf_reader.read_to_string(&mut contents)?;
 
-    println!("CPU Temp: {} °C", val / 1000);
-    // println!("{}", temp.status);
+    let regex = Regex::new(r"\d+").unwrap();
+    let res = regex
+        .find(&contents)
+        .unwrap()
+        .as_str()
+        .parse::<f32>()
+        .unwrap();
+
+    // println!("{:#?}", res);
+
+    println!("CPU Temp: {} °C", res / 1000_f32);
+
+    return Ok(());
 }
 
 fn parse_load_average(load_average: &String) -> Option<(f64, f64, f64, i32, i32, i32)> {
